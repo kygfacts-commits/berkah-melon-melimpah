@@ -2,13 +2,10 @@ import { supabase, formatRupiah, formatTanggal, escapeHtml, showToast, todayISO,
 import { onFilterChange, applyDateFilter } from './filter.js';
 import { exportSheet } from './export.js';
 import { skeletonRows, emptyState, getMonthRanges, renderMonthCompareCard } from './ui.js';
+import { loadJenisBiaya, addJenisBiaya } from './biaya-jenis.js';
 
-const JENIS_LABEL = {
-  listrik: 'Listrik',
-  air: 'Air',
-  tenaga_kerja: 'Tenaga Kerja',
-  lainnya: 'Lainnya',
-};
+let jenisLabelMap = {};
+let lastSelectedJenis = '';
 
 initGreenhouseContext();
 
@@ -57,6 +54,41 @@ form.addEventListener('submit', async (e) => {
 
 cancelBtn.addEventListener('click', resetForm);
 
+async function populateJenisBiaya(selectedKode) {
+  const jenisList = await loadJenisBiaya();
+  jenisLabelMap = Object.fromEntries(jenisList.map((j) => [j.kode, j.nama]));
+
+  const options = jenisList.map((j) => `<option value="${j.kode}">${escapeHtml(j.nama)}</option>`).join('');
+  form.jenis_biaya.innerHTML = options + `<option value="__add__">+ Tambah jenis baru</option>`;
+
+  const target = selectedKode && jenisLabelMap[selectedKode] ? selectedKode : jenisList[0]?.kode || '';
+  form.jenis_biaya.value = target;
+  lastSelectedJenis = target;
+}
+
+form.jenis_biaya.addEventListener('change', async () => {
+  if (form.jenis_biaya.value !== '__add__') {
+    lastSelectedJenis = form.jenis_biaya.value;
+    return;
+  }
+
+  const nama = prompt('Nama jenis biaya baru:');
+  if (!nama || !nama.trim()) {
+    form.jenis_biaya.value = lastSelectedJenis;
+    return;
+  }
+
+  const newRow = await addJenisBiaya(nama);
+  if (!newRow) {
+    showToast('Gagal menambah jenis biaya', true);
+    form.jenis_biaya.value = lastSelectedJenis;
+    return;
+  }
+
+  showToast('Jenis biaya ditambahkan');
+  await populateJenisBiaya(newRow.kode);
+});
+
 function resetForm() {
   form.reset();
   form.tanggal.value = todayISO();
@@ -70,6 +102,7 @@ window.editBiayaOperasional = (id) => {
   if (!row) return;
   form.tanggal.value = row.tanggal;
   form.jenis_biaya.value = row.jenis_biaya;
+  lastSelectedJenis = form.jenis_biaya.value;
   form.nominal.value = row.nominal;
   form.keterangan.value = row.keterangan || '';
   editingId = id;
@@ -126,7 +159,7 @@ function render() {
       <div class="min-w-0 flex-1">
         <p class="text-xs text-muted">${formatTanggal(r.tanggal)}</p>
         <span class="inline-block text-xs bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-400 px-2 py-0.5 rounded-full mt-1">${
-          JENIS_LABEL[r.jenis_biaya] || r.jenis_biaya
+          jenisLabelMap[r.jenis_biaya] || r.jenis_biaya
         }</span>
         ${r.keterangan ? `<p class="text-sm text-muted break-words mt-1">${escapeHtml(r.keterangan)}</p>` : ''}
         <p class="text-rose-600 dark:text-rose-400 font-semibold mt-1">${formatRupiah(r.nominal)}</p>
@@ -168,7 +201,7 @@ async function loadMonthSummary() {
 exportBtn?.addEventListener('click', () => {
   const exportRows = rows.map((r) => ({
     Tanggal: formatTanggal(r.tanggal),
-    'Jenis Biaya': JENIS_LABEL[r.jenis_biaya] || r.jenis_biaya,
+    'Jenis Biaya': jenisLabelMap[r.jenis_biaya] || r.jenis_biaya,
     'Nominal (Rp)': Number(r.nominal || 0),
     Keterangan: r.keterangan || '',
   }));
@@ -176,5 +209,5 @@ exportBtn?.addEventListener('click', () => {
 });
 
 onFilterChange(load);
-load();
+populateJenisBiaya().then(load);
 loadMonthSummary();

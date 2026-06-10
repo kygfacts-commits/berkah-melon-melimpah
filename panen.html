@@ -49,12 +49,12 @@
   <div class="page-shell">
 
     <div class="sticky top-0 z-20 shadow-md">
-      <header class="bg-gradient-to-r from-emerald-600 to-green-500 text-white px-4 py-3">
+      <header class="bg-gradient-to-r from-sky-500 to-blue-500 text-white px-4 py-3">
         <div class="flex items-center gap-3">
           <a href="index.html" class="shrink-0 text-white/90 hover:text-white text-xl leading-none" aria-label="Kembali ke menu utama">&larr;</a>
           <div class="min-w-0 flex-1">
-            <h1 id="greenhouse-name" class="text-lg sm:text-xl font-bold truncate">🍈 Memuat...</h1>
-            <p class="text-emerald-50 text-xs sm:text-sm mt-0.5">Panen</p>
+            <h1 class="text-lg sm:text-xl font-bold truncate">🌾 Panen</h1>
+            <p class="text-sky-50 text-xs sm:text-sm mt-0.5">Event Panen — Semua Greenhouse</p>
           </div>
           <button data-theme-toggle type="button" class="shrink-0 w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-base transition" aria-label="Ganti tema">🌙</button>
         </div>
@@ -75,40 +75,50 @@
 
     <main class="flex-1 p-4 space-y-4 pb-10">
 
-      <div id="month-summary" class="fade-in">
-        <div class="skeleton h-32"></div>
+      <div id="panen-summary" class="grid grid-cols-2 gap-3 fade-in">
+        <div class="skeleton h-20"></div>
+        <div class="skeleton h-20"></div>
       </div>
 
-      <form id="form-panen" class="card p-4 space-y-3 fade-in fade-in-1">
-        <h2 class="font-semibold text-heading">Tambah Data Panen</h2>
+      <form id="form-event-panen" class="card p-4 space-y-3 fade-in fade-in-1">
+        <h2 class="font-semibold text-heading">Tambah Event Panen</h2>
         <div>
-          <label class="label">Tanggal Panen</label>
-          <input type="date" name="tanggal_panen" required class="input-field">
+          <label class="label">Tanggal</label>
+          <input type="date" name="tanggal" required class="input-field">
         </div>
-        <div>
-          <label class="label">Jumlah Hasil Panen (kg)</label>
-          <input type="number" name="jumlah_kg" min="0" step="0.1" required placeholder="0" class="input-field">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="label">Harga Grade A (Rp/kg)</label>
+            <input type="number" name="harga_grade_a" min="0" step="100" placeholder="0" class="input-field">
+          </div>
+          <div>
+            <label class="label">Harga Grade B (Rp/kg)</label>
+            <input type="number" name="harga_grade_b" min="0" step="100" placeholder="0" class="input-field">
+          </div>
+          <div>
+            <label class="label">Harga Grade C (Rp/kg)</label>
+            <input type="number" name="harga_grade_c" min="0" step="100" placeholder="0" class="input-field">
+          </div>
+          <div>
+            <label class="label">Harga Grade D (Rp/kg)</label>
+            <input type="number" name="harga_grade_d" min="0" step="100" placeholder="0" class="input-field">
+          </div>
         </div>
         <div>
           <label class="label">Keterangan</label>
-          <textarea name="keterangan" rows="2" placeholder="Contoh: Grade A, Blok 1 (opsional)" class="input-field"></textarea>
+          <textarea name="keterangan" rows="2" placeholder="Catatan tambahan (opsional)" class="input-field"></textarea>
         </div>
-        <div class="flex gap-2">
-          <button type="submit" id="panen-submit-btn" class="flex-1 btn-primary">Simpan</button>
-          <button type="button" id="panen-cancel-btn" class="hidden btn-secondary">Batal</button>
-        </div>
+        <button type="submit" class="w-full btn-primary">Tambah Event Panen</button>
       </form>
 
       <div class="card p-4 flex flex-wrap justify-between items-center gap-2 fade-in fade-in-2">
-        <span class="text-sm text-muted">Total Hasil Panen</span>
-        <span id="panen-total" class="font-bold text-emerald-600 dark:text-emerald-400">0 kg</span>
+        <span class="text-sm text-muted">Daftar Event Panen</span>
         <button id="panen-export" type="button" class="w-full sm:w-auto text-xs px-3 py-1.5 bg-white dark:bg-slate-700 border border-emerald-200 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400 rounded-md font-medium hover:bg-emerald-50 dark:hover:bg-slate-600">Export Excel</button>
       </div>
 
-      <div id="panen-list" class="space-y-2 fade-in fade-in-3">
-        <div class="skeleton h-20"></div>
-        <div class="skeleton h-20"></div>
-        <div class="skeleton h-20"></div>
+      <div id="event-panen-list" class="space-y-3 fade-in fade-in-3">
+        <div class="skeleton h-48"></div>
+        <div class="skeleton h-48"></div>
       </div>
 
     </main>
@@ -124,6 +134,6 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script type="module" src="assets/js/theme.js"></script>
   <script type="module" src="assets/js/filter.js"></script>
-  <script type="module" src="assets/js/panen.js"></script>
+  <script type="module" src="assets/js/event-panen.js"></script>
 </body>
 </html>

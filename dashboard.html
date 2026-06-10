@@ -61,6 +61,7 @@
       </header>
       <nav class="flex bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 transition-colors">
         <button data-tab="log-harian" class="tab-btn flex-1 px-3 py-3 text-sm font-medium border-b-2 text-emerald-600 dark:text-emerald-400 border-emerald-600 dark:border-emerald-400">Log Harian</button>
+        <button data-tab="log-pupuk" class="tab-btn flex-1 px-3 py-3 text-sm font-medium border-b-2 text-slate-500 dark:text-slate-400 border-transparent">Log Pupuk</button>
         <button data-tab="rekap" class="tab-btn flex-1 px-3 py-3 text-sm font-medium border-b-2 text-slate-500 dark:text-slate-400 border-transparent">Rekap HPP</button>
       </nav>
       <div class="flex flex-wrap items-end gap-2 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-3 py-2 transition-colors">
@@ -118,6 +119,65 @@
         </div>
       </section>
 
+      <!-- LOG PUPUK -->
+      <section id="tab-log-pupuk" class="hidden space-y-4">
+        <form id="form-log-pupuk" class="card p-4 space-y-3 fade-in">
+          <h2 class="font-semibold text-heading">Tambah Log Pupuk</h2>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="label">Tanggal</label>
+              <input type="date" name="tanggal" required class="input-field">
+            </div>
+            <div>
+              <label class="label">HST</label>
+              <input type="number" name="hst" min="0" step="1" placeholder="0" class="input-field">
+            </div>
+          </div>
+          <div>
+            <label class="label">Jenis Kegiatan</label>
+            <select name="jenis_kegiatan" required class="input-field">
+              <option value="spray">Spray</option>
+              <option value="pemupukan">Pemupukan</option>
+              <option value="injek">Injek</option>
+              <option value="spray_injek">Spray + Injek</option>
+            </select>
+          </div>
+          <div>
+            <label class="label">Dosis Pupuk</label>
+            <div id="log-pupuk-dosis-grid" class="grid grid-cols-2 gap-3">
+              <div class="skeleton h-12"></div>
+              <div class="skeleton h-12"></div>
+              <div class="skeleton h-12"></div>
+              <div class="skeleton h-12"></div>
+            </div>
+          </div>
+          <div>
+            <label class="label">Keterangan</label>
+            <textarea name="keterangan" rows="2" placeholder="Catatan tambahan (opsional)" class="input-field"></textarea>
+          </div>
+          <div class="rounded-xl bg-slate-50 dark:bg-slate-900/50 p-3 flex justify-between items-center">
+            <span class="text-sm text-muted">Estimasi Biaya</span>
+            <span id="log-pupuk-estimasi" class="font-bold text-heading text-lg">Rp 0</span>
+          </div>
+          <div class="flex gap-2">
+            <button type="submit" id="log-pupuk-submit-btn" class="flex-1 btn-primary">Simpan</button>
+            <button type="button" id="log-pupuk-cancel-btn" class="hidden btn-secondary">Batal</button>
+          </div>
+        </form>
+
+        <div class="card p-4 flex flex-wrap justify-between items-center gap-2 fade-in fade-in-1">
+          <span class="text-sm text-muted">Total Biaya Log Pupuk</span>
+          <span id="log-pupuk-total" class="font-bold text-rose-600 dark:text-rose-400">Rp 0</span>
+          <button id="log-pupuk-export" type="button" class="w-full sm:w-auto text-xs px-3 py-1.5 bg-white dark:bg-slate-700 border border-emerald-200 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400 rounded-md font-medium hover:bg-emerald-50 dark:hover:bg-slate-600">Export Excel</button>
+        </div>
+
+        <div id="log-pupuk-list" class="space-y-2 fade-in fade-in-2">
+          <div class="skeleton h-20"></div>
+          <div class="skeleton h-20"></div>
+          <div class="skeleton h-20"></div>
+        </div>
+      </section>
+
       <!-- REKAPITULASI -->
       <section id="tab-rekap" class="hidden space-y-4">
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -135,24 +195,17 @@
           </div>
         </div>
 
-        <!-- Harga Jual & Profit -->
+        <!-- Total Penghasilan & Profit -->
         <div class="card p-4 space-y-3 fade-in">
-          <h2 class="font-semibold text-heading">Harga Jual &amp; Estimasi Profit</h2>
-          <div class="flex flex-wrap items-end gap-2">
-            <div class="flex-1 min-w-[160px]">
-              <label class="label">Harga Jual per Kg (Rp)</label>
-              <input type="number" id="harga-jual-input" min="0" step="100" placeholder="0" class="input-field">
-            </div>
-            <button id="harga-jual-save" type="button" class="btn-primary">Simpan</button>
-          </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          <h2 class="font-semibold text-heading">Total Penghasilan &amp; Profit</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div class="rounded-xl bg-slate-50 dark:bg-slate-900/50 p-3">
-              <p class="text-xs text-muted uppercase tracking-wide">Margin per Kg</p>
-              <p id="rekap-margin" class="text-xl font-bold mt-1 text-heading">-</p>
+              <p class="text-xs text-muted uppercase tracking-wide">Total Penghasilan</p>
+              <p id="rekap-penghasilan-total" class="text-xl font-bold mt-1 text-heading">Rp 0</p>
             </div>
             <div class="rounded-xl bg-slate-50 dark:bg-slate-900/50 p-3">
-              <p class="text-xs text-muted uppercase tracking-wide">Estimasi Total Profit</p>
-              <p id="rekap-profit-total" class="text-xl font-bold mt-1 text-heading">-</p>
+              <p class="text-xs text-muted uppercase tracking-wide">Profit</p>
+              <p id="rekap-profit-total" class="text-xl font-bold mt-1 text-heading">Rp 0</p>
             </div>
           </div>
           <p id="rekap-profit-status" class="text-sm font-semibold"></p>
@@ -176,14 +229,7 @@
 
         <div class="card p-4 fade-in">
           <h2 class="font-semibold text-heading mb-2">Rincian Biaya Produksi</h2>
-          <dl class="divide-y divide-slate-100 dark:divide-slate-700 text-sm">
-            <div class="flex justify-between py-2"><dt class="text-muted">Total Log Harian</dt><dd id="rekap-log-total" class="font-medium text-heading">Rp 0</dd></div>
-            <div class="flex justify-between py-2"><dt class="text-muted">Listrik</dt><dd id="rekap-listrik" class="font-medium text-heading">Rp 0</dd></div>
-            <div class="flex justify-between py-2"><dt class="text-muted">Air</dt><dd id="rekap-air" class="font-medium text-heading">Rp 0</dd></div>
-            <div class="flex justify-between py-2"><dt class="text-muted">Tenaga Kerja</dt><dd id="rekap-tenaga-kerja" class="font-medium text-heading">Rp 0</dd></div>
-            <div class="flex justify-between py-2"><dt class="text-muted">Biaya Lainnya</dt><dd id="rekap-lainnya" class="font-medium text-heading">Rp 0</dd></div>
-            <div class="flex justify-between py-2 font-semibold text-heading"><dt>Total Biaya Operasional</dt><dd id="rekap-operasional-total">Rp 0</dd></div>
-          </dl>
+          <dl id="rekap-breakdown" class="divide-y divide-slate-100 dark:divide-slate-700 text-sm"></dl>
         </div>
 
         <p class="text-xs text-muted leading-relaxed">
@@ -199,7 +245,7 @@
           </button>
         </div>
         <button id="btn-export-semua" class="w-full btn-primary">
-          Export Semua (Excel - 4 Sheet)
+          Export Semua (Excel - 6 Sheet)
         </button>
       </section>
 
@@ -220,5 +266,6 @@
   <script type="module" src="assets/js/filter.js"></script>
   <script type="module" src="assets/js/rekapitulasi.js"></script>
   <script type="module" src="assets/js/log-harian.js"></script>
+  <script type="module" src="assets/js/log-pupuk.js"></script>
 </body>
 </html>

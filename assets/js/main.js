@@ -2,7 +2,7 @@ import { initGreenhouseContext } from './supabase.js';
 
 initGreenhouseContext();
 
-const TABS = ['log-harian', 'rekap'];
+const TABS = ['log-harian', 'log-pupuk', 'rekap'];
 
 function switchTab(tab, updateHash = true) {
   if (!TABS.includes(tab)) tab = 'log-harian';
