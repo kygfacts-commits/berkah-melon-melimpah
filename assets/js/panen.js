@@ -1,8 +1,10 @@
 import { supabase, formatKg, formatTanggal, escapeHtml, showToast, todayISO, getGreenhouseId, initGreenhouseContext } from './supabase.js';
 import { onFilterChange, applyDateFilter } from './filter.js';
 import { exportSheet } from './export.js';
+import { skeletonRows, emptyState, renderBottomNav, getMonthRanges, renderMonthCompareCard } from './ui.js';
 
 initGreenhouseContext();
+renderBottomNav('panen');
 
 const greenhouseId = getGreenhouseId();
 
@@ -12,6 +14,7 @@ const totalEl = document.getElementById('panen-total');
 const submitBtn = document.getElementById('panen-submit-btn');
 const cancelBtn = document.getElementById('panen-cancel-btn');
 const exportBtn = document.getElementById('panen-export');
+const monthSummaryEl = document.getElementById('month-summary');
 
 let rows = [];
 let editingId = null;
@@ -42,6 +45,7 @@ form.addEventListener('submit', async (e) => {
   showToast(editingId ? 'Data panen berhasil diperbarui' : 'Data panen berhasil ditambahkan');
   resetForm();
   await load();
+  loadMonthSummary();
 });
 
 cancelBtn.addEventListener('click', resetForm);
@@ -75,11 +79,12 @@ window.deletePanen = async (id) => {
   }
   showToast('Data dihapus');
   await load();
+  loadMonthSummary();
 };
 
 export async function load() {
   if (!greenhouseId) return;
-  list.innerHTML = '<p class="text-center text-slate-400 py-6">Memuat...</p>';
+  list.innerHTML = skeletonRows(3);
 
   let query = supabase.from('panen').select('*').eq('greenhouse_id', greenhouseId);
   query = applyDateFilter(query, 'tanggal_panen');
@@ -88,7 +93,7 @@ export async function load() {
     .order('created_at', { ascending: false });
 
   if (error) {
-    list.innerHTML = `<p class="text-center text-rose-500 py-6">Gagal memuat data: ${escapeHtml(error.message)}</p>`;
+    list.innerHTML = emptyState('Gagal memuat data: ' + escapeHtml(error.message), 'search');
     return;
   }
 
@@ -98,7 +103,7 @@ export async function load() {
 
 function render() {
   if (!rows.length) {
-    list.innerHTML = '<p class="text-center text-slate-400 py-6">Belum ada catatan panen</p>';
+    list.innerHTML = emptyState('Belum ada catatan panen', 'leaf');
     totalEl.textContent = formatKg(0);
     return;
   }
@@ -108,21 +113,45 @@ function render() {
 
   list.innerHTML = rows
     .map(
-      (r) => `
-    <div class="bg-white rounded-lg shadow-sm border border-slate-100 p-3 flex justify-between gap-3">
+      (r, i) => `
+    <div class="card p-3 flex justify-between gap-3 fade-in fade-in-${Math.min(i + 1, 5)}">
       <div class="min-w-0 flex-1">
-        <p class="text-xs text-slate-400">${formatTanggal(r.tanggal_panen)}</p>
-        ${r.keterangan ? `<p class="text-sm text-slate-500 break-words mt-0.5">${escapeHtml(r.keterangan)}</p>` : ''}
-        <p class="text-emerald-600 font-semibold mt-1">${formatKg(r.jumlah_kg)}</p>
+        <p class="text-xs text-muted">${formatTanggal(r.tanggal_panen)}</p>
+        ${r.keterangan ? `<p class="text-sm text-muted break-words mt-0.5">${escapeHtml(r.keterangan)}</p>` : ''}
+        <p class="text-emerald-600 dark:text-emerald-400 font-semibold mt-1">${formatKg(r.jumlah_kg)}</p>
       </div>
       <div class="flex flex-col gap-1.5 shrink-0">
-        <button onclick="editPanen('${r.id}')" class="text-xs px-2.5 py-1 bg-amber-50 text-amber-700 rounded-md font-medium hover:bg-amber-100">Edit</button>
-        <button onclick="deletePanen('${r.id}')" class="text-xs px-2.5 py-1 bg-rose-50 text-rose-600 rounded-md font-medium hover:bg-rose-100">Hapus</button>
+        <button onclick="editPanen('${r.id}')" class="text-xs px-2.5 py-1 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-md font-medium hover:bg-amber-100 dark:hover:bg-amber-900/50">Edit</button>
+        <button onclick="deletePanen('${r.id}')" class="text-xs px-2.5 py-1 bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-md font-medium hover:bg-rose-100 dark:hover:bg-rose-900/50">Hapus</button>
       </div>
     </div>
   `
     )
     .join('');
+}
+
+// ---------------------------------------------------------------
+// Perbandingan hasil panen bulan ini vs bulan lalu
+// ---------------------------------------------------------------
+async function loadMonthSummary() {
+  if (!greenhouseId) return;
+  const { thisStart, nextStart, lastStart } = getMonthRanges();
+
+  const [thisRes, lastRes] = await Promise.all([
+    supabase.from('panen').select('jumlah_kg').eq('greenhouse_id', greenhouseId).gte('tanggal_panen', thisStart).lt('tanggal_panen', nextStart),
+    supabase.from('panen').select('jumlah_kg').eq('greenhouse_id', greenhouseId).gte('tanggal_panen', lastStart).lt('tanggal_panen', thisStart),
+  ]);
+
+  const thisTotal = (thisRes.data || []).reduce((sum, r) => sum + Number(r.jumlah_kg || 0), 0);
+  const lastTotal = (lastRes.data || []).reduce((sum, r) => sum + Number(r.jumlah_kg || 0), 0);
+
+  monthSummaryEl.innerHTML = renderMonthCompareCard({
+    thisTotal,
+    lastTotal,
+    formatFn: formatKg,
+    higherIsBetter: true,
+    title: 'Hasil Panen: Bulan Ini vs Bulan Lalu',
+  });
 }
 
 exportBtn?.addEventListener('click', () => {
@@ -136,3 +165,4 @@ exportBtn?.addEventListener('click', () => {
 
 onFilterChange(load);
 load();
+loadMonthSummary();

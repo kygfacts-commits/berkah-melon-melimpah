@@ -11,6 +11,7 @@ create extension if not exists "pgcrypto";
 create table if not exists greenhouses (
   id uuid primary key default gen_random_uuid(),
   nama text not null,
+  harga_jual_per_kg numeric(14,2) not null default 0,
   created_at timestamptz not null default now()
 );
 

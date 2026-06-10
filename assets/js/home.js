@@ -1,4 +1,5 @@
-import { supabase, escapeHtml, showToast } from './supabase.js';
+import { supabase, escapeHtml, showToast, formatRupiah, formatKg } from './supabase.js';
+import { skeletonCards, emptyState } from './ui.js';
 
 const viewMenu = document.getElementById('view-menu');
 const viewGreenhouse = document.getElementById('view-greenhouse');
@@ -11,6 +12,7 @@ const cancelBtn = document.getElementById('greenhouse-cancel-btn');
 
 const pickerTitle = document.getElementById('picker-title');
 const pickerList = document.getElementById('picker-list');
+const summaryGrid = document.getElementById('summary-grid');
 
 const PICKER_CONFIG = {
   'biaya-operasional': { title: 'Biaya Operasional — Pilih Greenhouse', page: 'biaya-operasional.html' },
@@ -51,6 +53,45 @@ document.querySelectorAll('[data-back]').forEach((btn) => {
 });
 
 // ---------------------------------------------------------------
+// Ringkasan semua greenhouse (halaman awal)
+// ---------------------------------------------------------------
+
+async function loadSummary() {
+  const [ghRes, logRes, biayaRes, panenRes] = await Promise.all([
+    supabase.from('greenhouses').select('id', { count: 'exact', head: true }),
+    supabase.from('log_harian').select('nominal_biaya'),
+    supabase.from('biaya_operasional').select('nominal'),
+    supabase.from('panen').select('jumlah_kg'),
+  ]);
+
+  const ghCount = ghRes.count || 0;
+  const totalLog = (logRes.data || []).reduce((sum, r) => sum + Number(r.nominal_biaya || 0), 0);
+  const totalOperasional = (biayaRes.data || []).reduce((sum, r) => sum + Number(r.nominal || 0), 0);
+  const totalBiaya = totalLog + totalOperasional;
+  const totalPanen = (panenRes.data || []).reduce((sum, r) => sum + Number(r.jumlah_kg || 0), 0);
+  const hpp = totalPanen > 0 ? totalBiaya / totalPanen : 0;
+
+  summaryGrid.innerHTML = `
+    <div class="card p-4 fade-in">
+      <p class="text-xs text-muted uppercase tracking-wide">Total Biaya Produksi</p>
+      <p class="text-lg sm:text-xl font-bold text-teal-600 dark:text-teal-400 mt-1">${formatRupiah(totalBiaya)}</p>
+    </div>
+    <div class="card p-4 fade-in fade-in-1">
+      <p class="text-xs text-muted uppercase tracking-wide">Total Panen</p>
+      <p class="text-lg sm:text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">${formatKg(totalPanen)}</p>
+    </div>
+    <div class="card p-4 fade-in fade-in-2">
+      <p class="text-xs text-muted uppercase tracking-wide">HPP Rata-rata</p>
+      <p class="text-lg sm:text-xl font-bold text-amber-600 dark:text-amber-400 mt-1">${totalPanen > 0 ? formatRupiah(hpp) + '/kg' : '-'}</p>
+    </div>
+    <div class="card p-4 fade-in fade-in-3">
+      <p class="text-xs text-muted uppercase tracking-wide">Greenhouse Aktif</p>
+      <p class="text-lg sm:text-xl font-bold text-sky-600 dark:text-sky-400 mt-1">${ghCount}</p>
+    </div>
+  `;
+}
+
+// ---------------------------------------------------------------
 // Kelola Greenhouse (tambah / edit / hapus / masuk dashboard)
 // ---------------------------------------------------------------
 
@@ -73,6 +114,7 @@ form.addEventListener('submit', async (e) => {
   showToast(editingId ? 'Greenhouse berhasil diperbarui' : 'Greenhouse berhasil ditambahkan');
   resetForm();
   await loadGreenhouses();
+  loadSummary();
 });
 
 cancelBtn.addEventListener('click', resetForm);
@@ -103,6 +145,7 @@ async function deleteGreenhouse(id) {
   }
   showToast('Greenhouse dihapus');
   await loadGreenhouses();
+  loadSummary();
 }
 
 function openDashboard(id) {
@@ -110,14 +153,14 @@ function openDashboard(id) {
 }
 
 async function loadGreenhouses() {
-  list.innerHTML = '<p class="text-center text-slate-400 py-6 col-span-full">Memuat...</p>';
+  list.innerHTML = skeletonCards(2);
   const { data, error } = await supabase
     .from('greenhouses')
     .select('*')
     .order('created_at', { ascending: true });
 
   if (error) {
-    list.innerHTML = `<p class="text-center text-rose-500 py-6 col-span-full">Gagal memuat data: ${escapeHtml(error.message)}</p>`;
+    list.innerHTML = emptyState('Gagal memuat data: ' + escapeHtml(error.message), 'search');
     return;
   }
 
@@ -127,24 +170,24 @@ async function loadGreenhouses() {
 
 function renderGreenhouseList() {
   if (!rows.length) {
-    list.innerHTML = '<p class="text-center text-slate-400 py-6 col-span-full">Belum ada greenhouse, tambahkan di atas</p>';
+    list.innerHTML = emptyState('Belum ada greenhouse, tambahkan di atas', 'leaf');
     return;
   }
 
   list.innerHTML = rows
     .map(
-      (r) => `
-    <div class="greenhouse-card bg-white rounded-2xl shadow-sm border border-slate-100 p-4 flex flex-col gap-3 cursor-pointer hover:shadow-md hover:border-emerald-200 transition" data-id="${r.id}">
+      (r, i) => `
+    <div class="greenhouse-card card p-4 flex flex-col gap-3 cursor-pointer hover:shadow-card-lg hover:border-emerald-300 dark:hover:border-emerald-600 hover:-translate-y-0.5 transition-all duration-300 fade-in fade-in-${Math.min(i + 1, 5)}" data-id="${r.id}">
       <div class="flex items-start justify-between gap-2">
         <div class="min-w-0">
-          <h3 class="font-semibold text-slate-700 truncate">${escapeHtml(r.nama)}</h3>
-          <p class="text-xs text-slate-400 mt-0.5">Dibuat ${escapeHtml((r.created_at || '').slice(0, 10))}</p>
+          <h3 class="font-semibold text-heading truncate">${escapeHtml(r.nama)}</h3>
+          <p class="text-xs text-muted mt-0.5">Dibuat ${escapeHtml((r.created_at || '').slice(0, 10))}</p>
         </div>
-        <span class="text-emerald-600 text-lg leading-none shrink-0">&rarr;</span>
+        <span class="text-emerald-600 dark:text-emerald-400 text-lg leading-none shrink-0">&rarr;</span>
       </div>
-      <div class="flex gap-2 pt-2 border-t border-slate-100">
-        <button data-action="edit" data-id="${r.id}" class="flex-1 text-xs px-2.5 py-1.5 bg-amber-50 text-amber-700 rounded-md font-medium hover:bg-amber-100">Edit</button>
-        <button data-action="delete" data-id="${r.id}" class="flex-1 text-xs px-2.5 py-1.5 bg-rose-50 text-rose-600 rounded-md font-medium hover:bg-rose-100">Hapus</button>
+      <div class="flex gap-2 pt-2 border-t border-slate-100 dark:border-slate-700">
+        <button data-action="edit" data-id="${r.id}" class="flex-1 text-xs px-2.5 py-1.5 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-md font-medium hover:bg-amber-100 dark:hover:bg-amber-900/50">Edit</button>
+        <button data-action="delete" data-id="${r.id}" class="flex-1 text-xs px-2.5 py-1.5 bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-md font-medium hover:bg-rose-100 dark:hover:bg-rose-900/50">Hapus</button>
       </div>
     </div>
   `
@@ -171,28 +214,28 @@ list.addEventListener('click', (e) => {
 // ---------------------------------------------------------------
 
 async function loadPicker() {
-  pickerList.innerHTML = '<p class="text-center text-slate-400 py-6 col-span-full">Memuat...</p>';
+  pickerList.innerHTML = skeletonCards(2);
   const { data, error } = await supabase
     .from('greenhouses')
     .select('*')
     .order('created_at', { ascending: true });
 
   if (error) {
-    pickerList.innerHTML = `<p class="text-center text-rose-500 py-6 col-span-full">Gagal memuat data: ${escapeHtml(error.message)}</p>`;
+    pickerList.innerHTML = emptyState('Gagal memuat data: ' + escapeHtml(error.message), 'search');
     return;
   }
 
   if (!data.length) {
-    pickerList.innerHTML = '<p class="text-center text-slate-400 py-6 col-span-full">Belum ada greenhouse. Tambahkan lewat menu Greenhouse terlebih dahulu.</p>';
+    pickerList.innerHTML = emptyState('Belum ada greenhouse. Tambahkan lewat menu Greenhouse terlebih dahulu.', 'leaf');
     return;
   }
 
   pickerList.innerHTML = data
     .map(
-      (r) => `
-    <button type="button" data-id="${r.id}" class="picker-card text-left bg-white rounded-2xl shadow-sm border border-slate-100 p-4 flex items-center justify-between gap-2 cursor-pointer hover:shadow-md hover:border-emerald-200 transition">
-      <h3 class="font-semibold text-slate-700 truncate">${escapeHtml(r.nama)}</h3>
-      <span class="text-emerald-600 text-lg leading-none shrink-0">&rarr;</span>
+      (r, i) => `
+    <button type="button" data-id="${r.id}" class="picker-card text-left card p-4 flex items-center justify-between gap-2 cursor-pointer hover:shadow-card-lg hover:border-emerald-300 dark:hover:border-emerald-600 hover:-translate-y-0.5 transition-all duration-300 fade-in fade-in-${Math.min(i + 1, 5)}">
+      <h3 class="font-semibold text-heading truncate">${escapeHtml(r.nama)}</h3>
+      <span class="text-emerald-600 dark:text-emerald-400 text-lg leading-none shrink-0">&rarr;</span>
     </button>
   `
     )
@@ -204,3 +247,5 @@ pickerList.addEventListener('click', (e) => {
   if (!card || !pickerPage) return;
   window.location.href = pickerPage + '?gh=' + encodeURIComponent(card.dataset.id);
 });
+
+loadSummary();

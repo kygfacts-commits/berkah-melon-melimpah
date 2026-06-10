@@ -4,135 +4,220 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pencatatan Budidaya Melon</title>
+  <script>
+    (function () {
+      var theme = localStorage.getItem('melon-theme');
+      if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      }
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'] },
+          boxShadow: {
+            card: '0 4px 24px -2px rgba(15, 23, 42, 0.08), 0 2px 8px -2px rgba(15, 23, 42, 0.05)',
+            'card-lg': '0 16px 40px -12px rgba(15, 23, 42, 0.18), 0 4px 16px -4px rgba(15, 23, 42, 0.08)',
+          },
+        },
+      },
+    };
+  </script>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <style type="text/tailwindcss">
+    @layer components {
+      .page-shell { @apply max-w-3xl mx-auto min-h-screen flex flex-col; }
+      .card { @apply bg-white dark:bg-slate-800 rounded-2xl shadow-card border border-slate-100 dark:border-slate-700 transition-colors duration-300; }
+      .btn-primary { @apply inline-flex items-center justify-center gap-1.5 bg-gradient-to-r from-emerald-600 to-green-500 text-white py-2.5 px-4 rounded-xl font-semibold shadow-md shadow-emerald-600/20 hover:shadow-lg hover:shadow-emerald-600/30 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200; }
+      .btn-secondary { @apply inline-flex items-center justify-center gap-1.5 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-200 py-2.5 px-4 rounded-xl font-medium hover:bg-slate-50 dark:hover:bg-slate-600 transition; }
+      .input-field { @apply w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition; }
+      .label { @apply block text-sm text-slate-600 dark:text-slate-300 mb-1 font-medium; }
+      .text-muted { @apply text-slate-500 dark:text-slate-400; }
+      .text-heading { @apply text-slate-800 dark:text-slate-100; }
+      .skeleton { @apply animate-pulse bg-slate-200 dark:bg-slate-700 rounded-lg; }
+    }
+  </style>
 </head>
-<body class="bg-gradient-to-b from-emerald-50 via-slate-50 to-slate-100 text-slate-800 min-h-screen">
-  <div class="max-w-3xl mx-auto min-h-screen flex flex-col">
+<body class="bg-gradient-to-b from-emerald-50 via-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950 text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-300">
+  <div class="page-shell">
 
     <div class="sticky top-0 z-20 shadow-md">
       <header class="bg-gradient-to-r from-emerald-600 to-green-500 text-white px-4 py-3">
         <div class="flex items-center gap-3">
           <a href="index.html" class="shrink-0 text-white/90 hover:text-white text-xl leading-none" aria-label="Kembali ke menu utama">&larr;</a>
-          <div class="min-w-0">
+          <div class="min-w-0 flex-1">
             <h1 id="greenhouse-name" class="text-lg sm:text-xl font-bold truncate">🍈 Memuat...</h1>
             <p class="text-emerald-50 text-xs sm:text-sm mt-0.5">Log Harian &amp; Rekap HPP</p>
           </div>
+          <button data-theme-toggle type="button" class="shrink-0 w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-base transition" aria-label="Ganti tema">🌙</button>
         </div>
       </header>
-      <nav class="flex bg-white border-b border-slate-200">
-        <button data-tab="log-harian" class="tab-btn flex-1 px-3 py-3 text-sm font-medium border-b-2 text-emerald-600 border-emerald-600">Log Harian</button>
-        <button data-tab="rekap" class="tab-btn flex-1 px-3 py-3 text-sm font-medium border-b-2 text-slate-500 border-transparent">Rekap HPP</button>
+      <nav class="flex bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 transition-colors">
+        <button data-tab="log-harian" class="tab-btn flex-1 px-3 py-3 text-sm font-medium border-b-2 text-emerald-600 dark:text-emerald-400 border-emerald-600 dark:border-emerald-400">Log Harian</button>
+        <button data-tab="rekap" class="tab-btn flex-1 px-3 py-3 text-sm font-medium border-b-2 text-slate-500 dark:text-slate-400 border-transparent">Rekap HPP</button>
       </nav>
-      <div class="flex flex-wrap items-end gap-2 bg-white border-b border-slate-200 px-3 py-2">
+      <div class="flex flex-wrap items-end gap-2 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-3 py-2 transition-colors">
         <div>
-          <label class="block text-[11px] text-slate-500 mb-0.5">Dari Tanggal</label>
-          <input type="date" id="filter-dari" class="border border-slate-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+          <label class="block text-[11px] text-muted mb-0.5">Dari Tanggal</label>
+          <input type="date" id="filter-dari" class="border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
         </div>
         <div>
-          <label class="block text-[11px] text-slate-500 mb-0.5">Sampai Tanggal</label>
-          <input type="date" id="filter-sampai" class="border border-slate-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+          <label class="block text-[11px] text-muted mb-0.5">Sampai Tanggal</label>
+          <input type="date" id="filter-sampai" class="border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
         </div>
         <button id="filter-apply" type="button" class="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700">Terapkan</button>
-        <button id="filter-reset" type="button" class="px-3 py-1.5 border border-slate-300 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50">Reset</button>
+        <button id="filter-reset" type="button" class="px-3 py-1.5 border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 rounded-lg text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700">Reset</button>
       </div>
     </div>
 
-    <main class="flex-1 p-4 space-y-4 pb-10">
+    <main class="flex-1 p-4 space-y-4 pb-24 sm:pb-10">
 
       <!-- LOG HARIAN -->
       <section id="tab-log-harian" class="space-y-4">
-        <form id="form-log-harian" class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 space-y-3">
-          <h2 class="font-semibold text-slate-700">Tambah Log Harian</h2>
+        <form id="form-log-harian" class="card p-4 space-y-3 fade-in">
+          <h2 class="font-semibold text-heading">Tambah Log Harian</h2>
           <div>
-            <label class="block text-sm text-slate-600 mb-1">Tanggal</label>
-            <input type="date" name="tanggal" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            <label class="label">Tanggal</label>
+            <input type="date" name="tanggal" required class="input-field">
           </div>
           <div>
-            <label class="block text-sm text-slate-600 mb-1">Uraian Kegiatan</label>
-            <input type="text" name="uraian_kegiatan" required placeholder="Contoh: Penyemprotan pestisida" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            <label class="label">Uraian Kegiatan</label>
+            <input type="text" name="uraian_kegiatan" required placeholder="Contoh: Penyemprotan pestisida" class="input-field">
           </div>
           <div>
-            <label class="block text-sm text-slate-600 mb-1">Nominal Biaya (Rp)</label>
-            <input type="number" name="nominal_biaya" min="0" step="100" placeholder="0" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            <label class="label">Nominal Biaya (Rp)</label>
+            <input type="number" name="nominal_biaya" min="0" step="100" placeholder="0" class="input-field">
           </div>
           <div>
-            <label class="block text-sm text-slate-600 mb-1">Keterangan</label>
-            <textarea name="keterangan" rows="2" placeholder="Catatan tambahan (opsional)" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+            <label class="label">Keterangan</label>
+            <textarea name="keterangan" rows="2" placeholder="Catatan tambahan (opsional)" class="input-field"></textarea>
           </div>
           <div class="flex gap-2">
-            <button type="submit" id="log-submit-btn" class="flex-1 bg-emerald-600 text-white py-2.5 rounded-lg font-medium hover:bg-emerald-700">Simpan</button>
-            <button type="button" id="log-cancel-btn" class="hidden px-4 py-2.5 rounded-lg border border-slate-300 text-slate-600 font-medium hover:bg-slate-50">Batal</button>
+            <button type="submit" id="log-submit-btn" class="flex-1 btn-primary">Simpan</button>
+            <button type="button" id="log-cancel-btn" class="hidden btn-secondary">Batal</button>
           </div>
         </form>
 
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 flex flex-wrap justify-between items-center gap-2">
-          <span class="text-sm text-slate-500">Total Biaya Log Harian</span>
-          <span id="log-harian-total" class="font-bold text-rose-600">Rp 0</span>
-          <button id="log-harian-export" type="button" class="w-full sm:w-auto text-xs px-3 py-1.5 bg-white border border-emerald-200 text-emerald-700 rounded-md font-medium hover:bg-emerald-50">Export Excel</button>
+        <div class="card p-4 flex flex-wrap justify-between items-center gap-2 fade-in fade-in-1">
+          <span class="text-sm text-muted">Total Biaya Log Harian</span>
+          <span id="log-harian-total" class="font-bold text-rose-600 dark:text-rose-400">Rp 0</span>
+          <button id="log-harian-export" type="button" class="w-full sm:w-auto text-xs px-3 py-1.5 bg-white dark:bg-slate-700 border border-emerald-200 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400 rounded-md font-medium hover:bg-emerald-50 dark:hover:bg-slate-600">Export Excel</button>
         </div>
 
-        <div id="log-harian-list" class="space-y-2">
-          <p class="text-center text-slate-400 py-6">Memuat...</p>
+        <div id="log-harian-list" class="space-y-2 fade-in fade-in-2">
+          <div class="skeleton h-20"></div>
+          <div class="skeleton h-20"></div>
+          <div class="skeleton h-20"></div>
         </div>
       </section>
 
       <!-- REKAPITULASI -->
       <section id="tab-rekap" class="hidden space-y-4">
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
-            <p class="text-xs text-slate-500 uppercase tracking-wide">Total Biaya Produksi</p>
-            <p id="rekap-total-biaya" class="text-2xl font-bold text-rose-600 mt-1">Rp 0</p>
+          <div class="card p-4 fade-in">
+            <p class="text-xs text-muted uppercase tracking-wide">Total Biaya Produksi</p>
+            <p id="rekap-total-biaya" class="text-2xl font-bold text-teal-600 dark:text-teal-400 mt-1">Rp 0</p>
           </div>
-          <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
-            <p class="text-xs text-slate-500 uppercase tracking-wide">Total Hasil Panen</p>
-            <p id="rekap-total-panen" class="text-2xl font-bold text-emerald-600 mt-1">0 kg</p>
+          <div class="card p-4 fade-in fade-in-1">
+            <p class="text-xs text-muted uppercase tracking-wide">Total Hasil Panen</p>
+            <p id="rekap-total-panen" class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">0 kg</p>
           </div>
-          <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
-            <p class="text-xs text-slate-500 uppercase tracking-wide">HPP per Kg</p>
-            <p id="rekap-hpp" class="text-2xl font-bold text-amber-600 mt-1">-</p>
+          <div class="card p-4 fade-in fade-in-2">
+            <p class="text-xs text-muted uppercase tracking-wide">HPP per Kg</p>
+            <p id="rekap-hpp" class="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1">-</p>
           </div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
-          <h2 class="font-semibold text-slate-700 mb-2">Rincian Biaya Produksi</h2>
-          <dl class="divide-y divide-slate-100 text-sm">
-            <div class="flex justify-between py-2"><dt class="text-slate-500">Total Log Harian</dt><dd id="rekap-log-total" class="font-medium">Rp 0</dd></div>
-            <div class="flex justify-between py-2"><dt class="text-slate-500">Listrik</dt><dd id="rekap-listrik" class="font-medium">Rp 0</dd></div>
-            <div class="flex justify-between py-2"><dt class="text-slate-500">Air</dt><dd id="rekap-air" class="font-medium">Rp 0</dd></div>
-            <div class="flex justify-between py-2"><dt class="text-slate-500">Tenaga Kerja</dt><dd id="rekap-tenaga-kerja" class="font-medium">Rp 0</dd></div>
-            <div class="flex justify-between py-2"><dt class="text-slate-500">Biaya Lainnya</dt><dd id="rekap-lainnya" class="font-medium">Rp 0</dd></div>
-            <div class="flex justify-between py-2 font-semibold text-slate-700"><dt>Total Biaya Operasional</dt><dd id="rekap-operasional-total">Rp 0</dd></div>
+        <!-- Harga Jual & Profit -->
+        <div class="card p-4 space-y-3 fade-in">
+          <h2 class="font-semibold text-heading">Harga Jual &amp; Estimasi Profit</h2>
+          <div class="flex flex-wrap items-end gap-2">
+            <div class="flex-1 min-w-[160px]">
+              <label class="label">Harga Jual per Kg (Rp)</label>
+              <input type="number" id="harga-jual-input" min="0" step="100" placeholder="0" class="input-field">
+            </div>
+            <button id="harga-jual-save" type="button" class="btn-primary">Simpan</button>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+            <div class="rounded-xl bg-slate-50 dark:bg-slate-900/50 p-3">
+              <p class="text-xs text-muted uppercase tracking-wide">Margin per Kg</p>
+              <p id="rekap-margin" class="text-xl font-bold mt-1 text-heading">-</p>
+            </div>
+            <div class="rounded-xl bg-slate-50 dark:bg-slate-900/50 p-3">
+              <p class="text-xs text-muted uppercase tracking-wide">Estimasi Total Profit</p>
+              <p id="rekap-profit-total" class="text-xl font-bold mt-1 text-heading">-</p>
+            </div>
+          </div>
+          <p id="rekap-profit-status" class="text-sm font-semibold"></p>
+        </div>
+
+        <!-- GRAFIK -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="card p-4 fade-in">
+            <h2 class="font-semibold text-heading mb-3">Tren Biaya per Bulan</h2>
+            <div class="relative h-52">
+              <canvas id="chart-biaya"></canvas>
+            </div>
+          </div>
+          <div class="card p-4 fade-in fade-in-1">
+            <h2 class="font-semibold text-heading mb-3">Tren Panen per Bulan</h2>
+            <div class="relative h-52">
+              <canvas id="chart-panen"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="card p-4 fade-in">
+          <h2 class="font-semibold text-heading mb-2">Rincian Biaya Produksi</h2>
+          <dl class="divide-y divide-slate-100 dark:divide-slate-700 text-sm">
+            <div class="flex justify-between py-2"><dt class="text-muted">Total Log Harian</dt><dd id="rekap-log-total" class="font-medium text-heading">Rp 0</dd></div>
+            <div class="flex justify-between py-2"><dt class="text-muted">Listrik</dt><dd id="rekap-listrik" class="font-medium text-heading">Rp 0</dd></div>
+            <div class="flex justify-between py-2"><dt class="text-muted">Air</dt><dd id="rekap-air" class="font-medium text-heading">Rp 0</dd></div>
+            <div class="flex justify-between py-2"><dt class="text-muted">Tenaga Kerja</dt><dd id="rekap-tenaga-kerja" class="font-medium text-heading">Rp 0</dd></div>
+            <div class="flex justify-between py-2"><dt class="text-muted">Biaya Lainnya</dt><dd id="rekap-lainnya" class="font-medium text-heading">Rp 0</dd></div>
+            <div class="flex justify-between py-2 font-semibold text-heading"><dt>Total Biaya Operasional</dt><dd id="rekap-operasional-total">Rp 0</dd></div>
           </dl>
         </div>
 
-        <p class="text-xs text-slate-400 leading-relaxed">
+        <p class="text-xs text-muted leading-relaxed">
           HPP (Harga Pokok Produksi) per kg dihitung otomatis: <span class="font-medium">Total Biaya Produksi ÷ Total Hasil Panen (kg)</span>. Mengikuti filter rentang tanggal di atas.
         </p>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          <button id="btn-refresh-rekap" class="w-full bg-white border border-emerald-600 text-emerald-600 py-2.5 rounded-lg font-medium hover:bg-emerald-50">
+          <button id="btn-refresh-rekap" class="w-full btn-secondary border-emerald-600 dark:border-emerald-500 text-emerald-600 dark:text-emerald-400">
             Refresh Rekap
           </button>
-          <button id="btn-export-rekap" class="w-full bg-white border border-slate-300 text-slate-600 py-2.5 rounded-lg font-medium hover:bg-slate-50">
+          <button id="btn-export-rekap" class="w-full btn-secondary">
             Export Rekap (Excel)
           </button>
         </div>
-        <button id="btn-export-semua" class="w-full bg-emerald-600 text-white py-2.5 rounded-lg font-medium hover:bg-emerald-700">
+        <button id="btn-export-semua" class="w-full btn-primary">
           Export Semua (Excel - 4 Sheet)
         </button>
       </section>
 
     </main>
 
-    <footer class="text-center text-xs text-slate-400 py-3">
+    <footer class="text-center text-xs text-muted py-3">
       Data tersimpan otomatis ke Supabase
     </footer>
   </div>
+
+  <div id="bottom-nav-root"></div>
 
   <div id="toast" class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg shadow-lg text-sm text-white z-50"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <script type="module" src="assets/js/theme.js"></script>
   <script type="module" src="assets/js/main.js"></script>
   <script type="module" src="assets/js/filter.js"></script>
   <script type="module" src="assets/js/rekapitulasi.js"></script>

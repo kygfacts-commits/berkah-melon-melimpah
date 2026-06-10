@@ -2,6 +2,7 @@ import { supabase, formatRupiah, formatTanggal, escapeHtml, showToast, todayISO,
 import { refreshRekap } from './rekapitulasi.js';
 import { onFilterChange, applyDateFilter } from './filter.js';
 import { exportSheet } from './export.js';
+import { skeletonRows, emptyState } from './ui.js';
 
 const greenhouseId = getGreenhouseId();
 
@@ -82,7 +83,7 @@ window.deleteLogHarian = async (id) => {
 
 export async function load() {
   if (!greenhouseId) return;
-  list.innerHTML = '<p class="text-center text-slate-400 py-6">Memuat...</p>';
+  list.innerHTML = skeletonRows(3);
 
   let query = supabase.from('log_harian').select('*').eq('greenhouse_id', greenhouseId);
   query = applyDateFilter(query, 'tanggal');
@@ -91,7 +92,7 @@ export async function load() {
     .order('created_at', { ascending: false });
 
   if (error) {
-    list.innerHTML = `<p class="text-center text-rose-500 py-6">Gagal memuat data: ${escapeHtml(error.message)}</p>`;
+    list.innerHTML = emptyState('Gagal memuat data: ' + escapeHtml(error.message), 'search');
     return;
   }
 
@@ -101,7 +102,7 @@ export async function load() {
 
 function render() {
   if (!rows.length) {
-    list.innerHTML = '<p class="text-center text-slate-400 py-6">Belum ada catatan</p>';
+    list.innerHTML = emptyState('Belum ada catatan log harian', 'box');
     totalEl.textContent = formatRupiah(0);
     return;
   }
@@ -111,17 +112,17 @@ function render() {
 
   list.innerHTML = rows
     .map(
-      (r) => `
-    <div class="bg-white rounded-lg shadow-sm border border-slate-100 p-3 flex justify-between gap-3">
+      (r, i) => `
+    <div class="card p-3 flex justify-between gap-3 fade-in fade-in-${Math.min(i + 1, 5)}">
       <div class="min-w-0 flex-1">
-        <p class="text-xs text-slate-400">${formatTanggal(r.tanggal)}</p>
-        <p class="font-medium text-slate-700 break-words">${escapeHtml(r.uraian_kegiatan)}</p>
-        ${r.keterangan ? `<p class="text-sm text-slate-500 break-words mt-0.5">${escapeHtml(r.keterangan)}</p>` : ''}
-        <p class="text-rose-600 font-semibold mt-1">${formatRupiah(r.nominal_biaya)}</p>
+        <p class="text-xs text-muted">${formatTanggal(r.tanggal)}</p>
+        <p class="font-medium text-heading break-words">${escapeHtml(r.uraian_kegiatan)}</p>
+        ${r.keterangan ? `<p class="text-sm text-muted break-words mt-0.5">${escapeHtml(r.keterangan)}</p>` : ''}
+        <p class="text-rose-600 dark:text-rose-400 font-semibold mt-1">${formatRupiah(r.nominal_biaya)}</p>
       </div>
       <div class="flex flex-col gap-1.5 shrink-0">
-        <button onclick="editLogHarian('${r.id}')" class="text-xs px-2.5 py-1 bg-amber-50 text-amber-700 rounded-md font-medium hover:bg-amber-100">Edit</button>
-        <button onclick="deleteLogHarian('${r.id}')" class="text-xs px-2.5 py-1 bg-rose-50 text-rose-600 rounded-md font-medium hover:bg-rose-100">Hapus</button>
+        <button onclick="editLogHarian('${r.id}')" class="text-xs px-2.5 py-1 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-md font-medium hover:bg-amber-100 dark:hover:bg-amber-900/50">Edit</button>
+        <button onclick="deleteLogHarian('${r.id}')" class="text-xs px-2.5 py-1 bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-md font-medium hover:bg-rose-100 dark:hover:bg-rose-900/50">Hapus</button>
       </div>
     </div>
   `

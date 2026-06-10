@@ -1,6 +1,7 @@
 import { supabase, formatRupiah, formatTanggal, escapeHtml, showToast, todayISO, getGreenhouseId, initGreenhouseContext } from './supabase.js';
 import { onFilterChange, applyDateFilter } from './filter.js';
 import { exportSheet } from './export.js';
+import { skeletonRows, emptyState, renderBottomNav, getMonthRanges, renderMonthCompareCard } from './ui.js';
 
 const JENIS_LABEL = {
   listrik: 'Listrik',
@@ -10,6 +11,7 @@ const JENIS_LABEL = {
 };
 
 initGreenhouseContext();
+renderBottomNav('biaya');
 
 const greenhouseId = getGreenhouseId();
 
@@ -19,6 +21,7 @@ const totalEl = document.getElementById('biaya-operasional-total');
 const submitBtn = document.getElementById('biaya-submit-btn');
 const cancelBtn = document.getElementById('biaya-cancel-btn');
 const exportBtn = document.getElementById('biaya-operasional-export');
+const monthSummaryEl = document.getElementById('month-summary');
 
 let rows = [];
 let editingId = null;
@@ -50,6 +53,7 @@ form.addEventListener('submit', async (e) => {
   showToast(editingId ? 'Biaya berhasil diperbarui' : 'Biaya berhasil ditambahkan');
   resetForm();
   await load();
+  loadMonthSummary();
 });
 
 cancelBtn.addEventListener('click', resetForm);
@@ -84,11 +88,12 @@ window.deleteBiayaOperasional = async (id) => {
   }
   showToast('Data dihapus');
   await load();
+  loadMonthSummary();
 };
 
 export async function load() {
   if (!greenhouseId) return;
-  list.innerHTML = '<p class="text-center text-slate-400 py-6">Memuat...</p>';
+  list.innerHTML = skeletonRows(3);
 
   let query = supabase.from('biaya_operasional').select('*').eq('greenhouse_id', greenhouseId);
   query = applyDateFilter(query, 'tanggal');
@@ -97,7 +102,7 @@ export async function load() {
     .order('created_at', { ascending: false });
 
   if (error) {
-    list.innerHTML = `<p class="text-center text-rose-500 py-6">Gagal memuat data: ${escapeHtml(error.message)}</p>`;
+    list.innerHTML = emptyState('Gagal memuat data: ' + escapeHtml(error.message), 'search');
     return;
   }
 
@@ -107,7 +112,7 @@ export async function load() {
 
 function render() {
   if (!rows.length) {
-    list.innerHTML = '<p class="text-center text-slate-400 py-6">Belum ada catatan</p>';
+    list.innerHTML = emptyState('Belum ada catatan biaya operasional', 'box');
     totalEl.textContent = formatRupiah(0);
     return;
   }
@@ -117,24 +122,48 @@ function render() {
 
   list.innerHTML = rows
     .map(
-      (r) => `
-    <div class="bg-white rounded-lg shadow-sm border border-slate-100 p-3 flex justify-between gap-3">
+      (r, i) => `
+    <div class="card p-3 flex justify-between gap-3 fade-in fade-in-${Math.min(i + 1, 5)}">
       <div class="min-w-0 flex-1">
-        <p class="text-xs text-slate-400">${formatTanggal(r.tanggal)}</p>
-        <span class="inline-block text-xs bg-sky-50 text-sky-700 px-2 py-0.5 rounded-full mt-1">${
+        <p class="text-xs text-muted">${formatTanggal(r.tanggal)}</p>
+        <span class="inline-block text-xs bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-400 px-2 py-0.5 rounded-full mt-1">${
           JENIS_LABEL[r.jenis_biaya] || r.jenis_biaya
         }</span>
-        ${r.keterangan ? `<p class="text-sm text-slate-500 break-words mt-1">${escapeHtml(r.keterangan)}</p>` : ''}
-        <p class="text-rose-600 font-semibold mt-1">${formatRupiah(r.nominal)}</p>
+        ${r.keterangan ? `<p class="text-sm text-muted break-words mt-1">${escapeHtml(r.keterangan)}</p>` : ''}
+        <p class="text-rose-600 dark:text-rose-400 font-semibold mt-1">${formatRupiah(r.nominal)}</p>
       </div>
       <div class="flex flex-col gap-1.5 shrink-0">
-        <button onclick="editBiayaOperasional('${r.id}')" class="text-xs px-2.5 py-1 bg-amber-50 text-amber-700 rounded-md font-medium hover:bg-amber-100">Edit</button>
-        <button onclick="deleteBiayaOperasional('${r.id}')" class="text-xs px-2.5 py-1 bg-rose-50 text-rose-600 rounded-md font-medium hover:bg-rose-100">Hapus</button>
+        <button onclick="editBiayaOperasional('${r.id}')" class="text-xs px-2.5 py-1 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-md font-medium hover:bg-amber-100 dark:hover:bg-amber-900/50">Edit</button>
+        <button onclick="deleteBiayaOperasional('${r.id}')" class="text-xs px-2.5 py-1 bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-md font-medium hover:bg-rose-100 dark:hover:bg-rose-900/50">Hapus</button>
       </div>
     </div>
   `
     )
     .join('');
+}
+
+// ---------------------------------------------------------------
+// Perbandingan biaya bulan ini vs bulan lalu
+// ---------------------------------------------------------------
+async function loadMonthSummary() {
+  if (!greenhouseId) return;
+  const { thisStart, nextStart, lastStart } = getMonthRanges();
+
+  const [thisRes, lastRes] = await Promise.all([
+    supabase.from('biaya_operasional').select('nominal').eq('greenhouse_id', greenhouseId).gte('tanggal', thisStart).lt('tanggal', nextStart),
+    supabase.from('biaya_operasional').select('nominal').eq('greenhouse_id', greenhouseId).gte('tanggal', lastStart).lt('tanggal', thisStart),
+  ]);
+
+  const thisTotal = (thisRes.data || []).reduce((sum, r) => sum + Number(r.nominal || 0), 0);
+  const lastTotal = (lastRes.data || []).reduce((sum, r) => sum + Number(r.nominal || 0), 0);
+
+  monthSummaryEl.innerHTML = renderMonthCompareCard({
+    thisTotal,
+    lastTotal,
+    formatFn: formatRupiah,
+    higherIsBetter: false,
+    title: 'Biaya Operasional: Bulan Ini vs Bulan Lalu',
+  });
 }
 
 exportBtn?.addEventListener('click', () => {
@@ -149,3 +178,4 @@ exportBtn?.addEventListener('click', () => {
 
 onFilterChange(load);
 load();
+loadMonthSummary();
