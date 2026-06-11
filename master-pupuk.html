@@ -71,7 +71,7 @@
           </div>
           <form class="space-y-3">
             <input type="password" name="pin" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="••••" class="input-field text-center text-2xl tracking-[0.5em] font-bold">
-            <p data-pin-error class="hidden text-sm text-rose-600 dark:text-rose-400 font-medium">PIN salah, coba lagi.</p>
+            <p data-pin-error class="hidden text-sm text-rose-600 dark:text-rose-400 font-medium">PIN salah. Kembali ke menu utama...</p>
             <button type="submit" class="w-full btn-primary">Buka</button>
           </form>
         </div>
@@ -89,7 +89,33 @@
             Nilai inilah yang dipakai (sebagai snapshot) saat input Log Pupuk — perubahan harga di sini
             <span class="font-medium">tidak mengubah</span> data Log Pupuk yang sudah tersimpan.
           </p>
-          <button id="btn-lock" type="button" class="text-xs px-3 py-1.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-md font-medium hover:bg-slate-200 dark:hover:bg-slate-600">🔒 Kunci Halaman</button>
+          <div class="flex flex-wrap gap-2">
+            <button id="btn-lock" type="button" class="text-xs px-3 py-1.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-md font-medium hover:bg-slate-200 dark:hover:bg-slate-600">🔒 Kunci Halaman</button>
+            <button id="btn-ganti-pin" type="button" class="text-xs px-3 py-1.5 bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400 rounded-md font-medium hover:bg-violet-100 dark:hover:bg-violet-900/50">🔑 Ganti PIN</button>
+          </div>
+        </div>
+
+        <div id="ganti-pin-card" class="hidden card p-4 space-y-3 fade-in">
+          <h2 class="font-semibold text-heading">Ganti PIN</h2>
+          <form id="form-ganti-pin" class="space-y-3">
+            <div>
+              <label class="label">PIN Lama</label>
+              <input type="password" name="pin_lama" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="••••" class="input-field text-center text-xl tracking-[0.5em] font-bold">
+            </div>
+            <div>
+              <label class="label">PIN Baru</label>
+              <input type="password" name="pin_baru" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="••••" class="input-field text-center text-xl tracking-[0.5em] font-bold">
+            </div>
+            <div>
+              <label class="label">Konfirmasi PIN Baru</label>
+              <input type="password" name="pin_konfirmasi" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="••••" class="input-field text-center text-xl tracking-[0.5em] font-bold">
+            </div>
+            <p data-ganti-pin-error class="hidden text-sm text-rose-600 dark:text-rose-400 font-medium"></p>
+            <div class="flex gap-2">
+              <button type="submit" class="flex-1 btn-primary">Simpan PIN Baru</button>
+              <button type="button" id="btn-batal-ganti-pin" class="btn-secondary">Batal</button>
+            </div>
+          </form>
         </div>
 
         <div id="pupuk-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3">

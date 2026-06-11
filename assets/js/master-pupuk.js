@@ -1,8 +1,9 @@
 import { supabase, formatRupiah, escapeHtml, showToast } from './supabase.js';
-import { initPinGate } from './pin.js';
+import { initPinGate, changePin } from './pin.js';
 import { skeletonCards, emptyState } from './ui.js';
 
-const MASTER_PUPUK_PIN = '1234';
+const MASTER_PUPUK_PIN_DEFAULT = '1234';
+const PIN_SETTINGS_KEY = 'master_pupuk_pin';
 
 const list = document.getElementById('pupuk-list');
 const formTambah = document.getElementById('form-tambah-pupuk');
@@ -29,14 +30,16 @@ const DEFAULT_PUPUK_NAMES = new Set([
 let rows = [];
 
 initPinGate({
-  pin: MASTER_PUPUK_PIN,
-  storageKey: 'melon-pupuk-unlocked',
+  supabase,
+  settingsKey: PIN_SETTINGS_KEY,
+  defaultPin: MASTER_PUPUK_PIN_DEFAULT,
   gateEl: document.getElementById('pin-gate'),
   contentEl: document.getElementById('pin-content'),
   lockBtnEl: document.getElementById('btn-lock'),
+  redirectUrl: 'index.html',
 });
 
-// Muat data begitu konten terbuka (baik karena PIN benar maupun sudah tersimpan).
+// Muat data begitu konten terbuka (setelah PIN benar).
 const observer = new MutationObserver(() => {
   const content = document.getElementById('pin-content');
   if (!content.classList.contains('hidden') && !rows.length) {
@@ -45,10 +48,58 @@ const observer = new MutationObserver(() => {
 });
 observer.observe(document.getElementById('pin-content'), { attributes: true, attributeFilter: ['class'] });
 
-// Jika sudah unlocked sejak awal (initPinGate langsung membuka), load segera.
-if (!document.getElementById('pin-content').classList.contains('hidden')) {
-  load();
-}
+// ---------------------------------------------------------------
+// Ganti PIN
+// ---------------------------------------------------------------
+const gantiPinCard = document.getElementById('ganti-pin-card');
+const btnGantiPin = document.getElementById('btn-ganti-pin');
+const formGantiPin = document.getElementById('form-ganti-pin');
+const btnBatalGantiPin = document.getElementById('btn-batal-ganti-pin');
+const gantiPinError = formGantiPin.querySelector('[data-ganti-pin-error]');
+
+btnGantiPin.addEventListener('click', () => {
+  gantiPinCard.classList.toggle('hidden');
+  gantiPinError.classList.add('hidden');
+  formGantiPin.reset();
+});
+
+btnBatalGantiPin.addEventListener('click', () => {
+  gantiPinCard.classList.add('hidden');
+  formGantiPin.reset();
+  gantiPinError.classList.add('hidden');
+});
+
+formGantiPin.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const pinLama = formGantiPin.pin_lama.value.trim();
+  const pinBaru = formGantiPin.pin_baru.value.trim();
+  const pinKonfirmasi = formGantiPin.pin_konfirmasi.value.trim();
+
+  if (pinBaru !== pinKonfirmasi) {
+    gantiPinError.textContent = 'Konfirmasi PIN baru tidak cocok.';
+    gantiPinError.classList.remove('hidden');
+    return;
+  }
+
+  const result = await changePin({
+    supabase,
+    settingsKey: PIN_SETTINGS_KEY,
+    defaultPin: MASTER_PUPUK_PIN_DEFAULT,
+    oldPin: pinLama,
+    newPin: pinBaru,
+  });
+
+  if (!result.ok) {
+    gantiPinError.textContent = result.error;
+    gantiPinError.classList.remove('hidden');
+    return;
+  }
+
+  gantiPinError.classList.add('hidden');
+  formGantiPin.reset();
+  gantiPinCard.classList.add('hidden');
+  showToast('PIN berhasil diubah');
+});
 
 function selectOptions(options, selected) {
   return options
