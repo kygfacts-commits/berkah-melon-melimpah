@@ -65,7 +65,7 @@ export async function initGreenhouseContext() {
   currentGreenhouseName = data.nama;
   const nameEl = document.getElementById('greenhouse-name');
   if (nameEl) nameEl.textContent = '🍈 ' + data.nama;
-  document.title = data.nama + ' - Pencatatan Budidaya Melon';
+  document.title = data.nama + ' - USAHA BUDIDAYA MELON SUKSES 7 TURUNAN';
   return data;
 }
 
