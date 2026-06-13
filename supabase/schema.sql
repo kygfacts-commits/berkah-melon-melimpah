@@ -58,13 +58,13 @@ create index if not exists idx_panen_greenhouse on panen (greenhouse_id);
 
 -- =========================================================
 -- Row Level Security (RLS)
--- Aplikasi mengakses Supabase memakai publishable (anon) key
--- tanpa login, sehingga policy berikut membuka akses penuh
--- (baca, tambah, ubah, hapus) untuk role anon.
+-- Policy awal di bawah ini membuka akses penuh untuk role anon
+-- (state sebelum aplikasi memiliki login).
 --
--- Jika nanti aplikasi menambahkan login pengguna, ganti
--- policy ini agar dibatasi per user (mis. dengan kolom
--- user_id dan auth.uid()).
+-- Aplikasi SEKARANG memakai Supabase Auth (lihat login.html &
+-- assets/js/auth.js). Untuk database yang sudah berjalan, jalankan
+-- supabase/migrations/0008_auth_policies.sql agar akses dibatasi
+-- ke role authenticated saja (anon tidak bisa lagi baca/tulis).
 -- =========================================================
 
 alter table greenhouses enable row level security;

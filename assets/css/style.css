@@ -25,3 +25,10 @@ html {
 .fade-in-3 { animation-delay: 0.18s; }
 .fade-in-4 { animation-delay: 0.24s; }
 .fade-in-5 { animation-delay: 0.3s; }
+
+/* Sembunyikan halaman terproteksi sampai status login Supabase
+   terverifikasi (lihat assets/js/auth.js), agar tidak ada
+   "flash" konten sebelum redirect ke login.html. */
+body.auth-checking {
+  visibility: hidden;
+}
